@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2026 FIFA 월드컵 시뮬레이터</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet" />
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <h1>2026 FIFA 월드컵</h1>
+  </header>
+
+  <!-- 상위 탭 -->
+  <nav class="tab-nav top-tabs">
+    <button class="tab-btn active" data-tab="schedule">일정/결과</button>
+    <button class="tab-btn" data-tab="simulation">시뮬레이션</button>
+  </nav>
+
+  <main class="main-content">
+
+    <!-- 일정/결과 섹션 -->
+    <section id="tab-schedule" class="tab-section active">
+      <nav class="tab-nav sub-tabs">
+        <button class="tab-btn active" data-subtab="schedule-group">조별리그</button>
+        <button class="tab-btn" data-subtab="schedule-tournament">토너먼트</button>
+      </nav>
+      <div id="subtab-schedule-group" class="subtab-section active">
+        <!-- js/schedule.js 와 js/standings.js 가 여기에 내용을 채움 -->
+        <p class="placeholder">조별리그 일정 및 순위가 여기에 표시됩니다.</p>
+      </div>
+      <div id="subtab-schedule-tournament" class="subtab-section">
+        <p class="placeholder">토너먼트 일정이 여기에 표시됩니다.</p>
+      </div>
+    </section>
+
+    <!-- 시뮬레이션 섹션 -->
+    <section id="tab-simulation" class="tab-section">
+      <nav class="tab-nav sub-tabs">
+        <button class="tab-btn active" data-subtab="sim-group">조별리그</button>
+        <button class="tab-btn" data-subtab="sim-tournament">토너먼트</button>
+      </nav>
+      <div id="subtab-sim-group" class="subtab-section active">
+        <p class="placeholder">직접 결과를 입력해 조별 순위를 시뮬레이션합니다.</p>
+      </div>
+      <div id="subtab-sim-tournament" class="subtab-section">
+        <p class="placeholder">토너먼트 브라켓이 여기에 표시됩니다.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- JS는 body 맨 아래에: HTML이 다 로드된 후 실행되도록 -->
+  <script src="js/api.js"></script>
+  <script src="js/tabs.js"></script>
+  <script src="js/schedule.js"></script>
+  <script src="js/tournament.js"></script>
+</body>
+</html>

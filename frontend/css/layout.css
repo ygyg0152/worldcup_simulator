@@ -1,0 +1,88 @@
+/* 전체 레이아웃과 탭 구조 */
+
+.site-header {
+  background: linear-gradient(135deg, #1a1a3e, #0d2b5e);
+  padding: 20px 24px;
+  border-bottom: 2px solid #2a4a8a;
+  text-align: center;
+}
+
+.site-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+}
+
+/* 탭 공통 스타일 */
+.tab-nav {
+  display: flex;
+  background-color: #111130;
+}
+
+.top-tabs {
+  border-bottom: 2px solid #2a4a8a;
+}
+
+.top-tabs .tab-btn {
+  flex: 1;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #888;
+  border-bottom: 3px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.top-tabs .tab-btn.active {
+  color: #ffffff;
+  border-bottom-color: #4a90e2;
+}
+
+.sub-tabs {
+  padding: 0 16px;
+  gap: 4px;
+  background-color: #0d0d25;
+}
+
+.sub-tabs .tab-btn {
+  padding: 10px 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.sub-tabs .tab-btn.active {
+  color: #4a90e2;
+  border-bottom-color: #4a90e2;
+}
+
+/* 탭 섹션 표시/숨김 */
+/* 핵심 개념: display:none 은 완전히 숨김, visibility:hidden 은 자리만 차지하고 숨김 */
+.tab-section {
+  display: none;
+}
+
+.tab-section.active {
+  display: block;
+}
+
+.subtab-section {
+  display: none;
+  padding: 16px;
+}
+
+.subtab-section.active {
+  display: block;
+}
+
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+#subtab-schedule-tournament {
+  padding: 8px 0;
+}

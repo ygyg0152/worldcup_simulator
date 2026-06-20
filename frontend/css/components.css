@@ -1,0 +1,491 @@
+/* 재사용 가능한 UI 컴포넌트 */
+
+/* ───── 토너먼트 브라켓 ───── */
+
+:root {
+  --header-h: 18px;  /* 경기 라벨 헤더 높이 */
+  --match-h: 88px;   /* 경기 카드 높이 (헤더 18 + 팀 29×2 + 여백 12) */
+  --conn: 8px;       /* 연결선 팔 길이 */
+  --col-gap: 12px;   /* 컬럼 사이 간격 */
+  --col-w: 110px;    /* 컬럼 너비 */
+  --total-h: 640px;  /* 브라켓 전체 높이 */
+}
+
+.bracket-wrapper {
+  padding: 8px;
+  overflow-x: auto;
+}
+
+.bracket-outer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--col-gap);
+  min-width: max-content;
+}
+
+/* 라운드 컬럼 */
+.bracket-col {
+  display: flex;
+  flex-direction: column;
+  width: var(--col-w);
+}
+
+.bracket-col-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #4a90e2;
+  text-align: center;
+  padding: 5px 0;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #2a4a8a;
+}
+
+/* 컬럼 바디: 전체 높이 고정, pair가 flex: 1로 균등 분할 */
+.bracket-col-body {
+  display: flex;
+  flex-direction: column;
+  height: var(--total-h);
+}
+
+.bracket-col-body.single {
+  justify-content: center;
+}
+
+/* ── 경기 pair (두 경기를 묶음) ── */
+.match-pair {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  position: relative;
+}
+
+/* 왼쪽 pair 연결선: ─┐ / │ / ─┘ 모양 (오른쪽으로 열림) */
+.match-pair.left::before {
+  content: '';
+  position: absolute;
+  right: calc(-1 * var(--conn));
+  top: 25%;
+  height: 50%;
+  width: var(--conn);
+  border-top: 1px solid #3a5a8a;
+  border-right: 1px solid #3a5a8a;
+  border-bottom: 1px solid #3a5a8a;
+  pointer-events: none;
+}
+
+/* 왼쪽 pair → 다음 컬럼 연결 수평선 */
+.match-pair.left::after {
+  content: '';
+  position: absolute;
+  right: calc(-1 * var(--col-gap));
+  top: 50%;
+  width: calc(var(--col-gap) - var(--conn));
+  height: 1px;
+  background: #3a5a8a;
+  pointer-events: none;
+}
+
+/* 오른쪽 pair 연결선: ┐─ / │ / ┘─ 모양 (왼쪽으로 열림) */
+.match-pair.right::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--conn));
+  top: 25%;
+  height: 50%;
+  width: var(--conn);
+  border-top: 1px solid #3a5a8a;
+  border-left: 1px solid #3a5a8a;
+  border-bottom: 1px solid #3a5a8a;
+  pointer-events: none;
+}
+
+/* 오른쪽 pair → 다음 컬럼 연결 수평선 */
+.match-pair.right::after {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--col-gap));
+  top: 50%;
+  width: calc(var(--col-gap) - var(--conn));
+  height: 1px;
+  background: #3a5a8a;
+  pointer-events: none;
+}
+
+/* 4강 컬럼: SF → 결승 수평선 */
+.sf-col.left .match-single::after {
+  content: '';
+  position: absolute;
+  right: calc(-1 * var(--col-gap));
+  top: 50%;
+  width: var(--col-gap);
+  height: 1px;
+  background: #3a5a8a;
+}
+
+.sf-col.right .match-single::after {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--col-gap));
+  top: 50%;
+  width: var(--col-gap);
+  height: 1px;
+  background: #3a5a8a;
+}
+
+.match-single {
+  position: relative;
+}
+
+/* 경기 카드 */
+.bracket-match {
+  background: #0d0d28;
+  border: 1px solid #252550;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  padding-bottom: 4px;
+}
+
+.bracket-match.phantom {
+  visibility: hidden;
+  height: var(--match-h);
+}
+
+/* 경기 라벨 헤더 (32강 1경기 등) */
+.match-header {
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  padding: 0 7px;
+  background: #0c0c26;
+  border-bottom: 1px solid #252550;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #5a80c0;
+  white-space: nowrap;
+  overflow: hidden;
+  letter-spacing: 0.02em;
+}
+
+.bracket-team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px 4px 5px;
+  margin: 4px 4px 0;
+  border-radius: 4px;
+  background: #141438;
+  height: calc((var(--match-h) - var(--header-h) - 12px) / 2);
+  box-sizing: border-box;
+}
+
+.bracket-team .flag-icon {
+  width: 18px;
+  height: 12px;
+  margin: 0 3px 0 0;
+}
+
+.bracket-team.winner { background: #1a2a4a; }
+.bracket-team.unconfirmed { opacity: 0.5; }
+
+.bracket-team-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.bracket-score {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  min-width: 12px;
+  text-align: right;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.tbd-label {
+  color: #556;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.tbd-empty {
+  color: #333;
+  font-size: 0.8rem;
+}
+
+/* 가운데 결승 + 우승컵 */
+.bracket-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 120px;
+  flex-shrink: 0;
+}
+
+/* col-body와 동일한 높이, 결승 매치를 정중앙에 배치 */
+.bracket-center-body {
+  width: 100%;
+  height: var(--total-h);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  position: relative;
+}
+
+.trophy {
+  font-size: 2.5rem;
+  position: absolute;
+  top: calc(50% - 110px);
+  left: 0;
+  right: 0;
+  text-align: center;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+}
+
+/* 3위결정전 */
+.third-place-wrap {
+  margin-top: calc(var(--match-h) / 2 - var(--total-h) / 2 + 16px);
+  padding-top: 12px;
+  border-top: 1px dashed #2a4a8a;
+  width: var(--col-w);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.placeholder {
+  color: #555;
+  text-align: center;
+  padding: 40px 16px;
+  font-size: 0.9rem;
+}
+
+/* 조별 순위 테이블 */
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-bottom: 24px;
+}
+
+.standings-table th,
+.standings-table td {
+  padding: 8px 10px;
+  text-align: center;
+  border-bottom: 1px solid #1e1e3e;
+}
+
+.standings-table th {
+  background-color: #1a1a3e;
+  color: #888;
+  font-weight: 500;
+}
+
+.standings-table tr:hover td {
+  background-color: #13133a;
+}
+
+/* 경기 카드 */
+.match-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #111130;
+  border: 1px solid #1e1e3e;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+}
+
+.match-datetime {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #888;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-align: left;
+}
+
+.match-team {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.match-team.home {
+  text-align: right;
+}
+
+.match-team.away {
+  text-align: left;
+}
+
+.match-score {
+  padding: 4px 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #4a90e2;
+  min-width: 60px;
+  text-align: center;
+}
+
+/* 점수 입력 필드 (시뮬레이션용) */
+.score-input {
+  width: 36px;
+  text-align: center;
+  background: #1a1a3e;
+  border: 1px solid #2a4a8a;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 1rem;
+  padding: 4px;
+}
+
+.score-input:focus {
+  outline: none;
+  border-color: #4a90e2;
+}
+
+/* 국기 아이콘 */
+.flag-icon {
+  width: 24px;
+  height: 16px;
+  object-fit: cover;
+  border-radius: 2px;
+  vertical-align: middle;
+  margin: 0 4px;
+}
+
+.team-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.standings-table th {
+  white-space: nowrap;
+}
+
+.match-score.finished {
+  color: #fff;
+}
+
+.group-section {
+  margin-bottom: 40px;
+}
+
+.match-list {
+  margin-top: 12px;
+}
+
+/* 4x3 그리드 */
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 16px;
+}
+
+/* 조 카드 */
+.group-card {
+  min-width: 0;
+  background-color: #111130;
+  border: 1px solid #1e1e3e;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.1s;
+}
+
+.group-card:hover {
+  border-color: #4a90e2;
+  transform: translateY(-2px);
+}
+
+.group-card-header {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #4a90e2;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #2a4a8a;
+}
+
+/* 요약 순위표 */
+.standings-table.summary {
+  font-size: 0.75rem;
+}
+
+.standings-table.summary th,
+.standings-table.summary td {
+  padding: 4px 6px;
+}
+
+/* 모달 */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-content {
+  background: #0d0d2b;
+  border: 1px solid #2a4a8a;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: #fff;
+}
+
+.modal-group-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #4a90e2;
+  margin-bottom: 16px;
+}
+
+/* 조 헤더 */
+.group-header {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #4a90e2;
+  padding: 12px 0 6px;
+  border-bottom: 1px solid #2a4a8a;
+  margin-bottom: 8px;
+}
