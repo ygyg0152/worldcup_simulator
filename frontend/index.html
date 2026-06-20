@@ -43,6 +43,11 @@
 
     <!-- 시뮬레이션 섹션 -->
     <section id="tab-simulation" class="tab-section">
+      <div class="sim-action-bar">
+        <button class="sim-action-btn primary" onclick="applyRealResults()">현재까지의 결과 반영하기</button>
+        <button class="sim-action-btn random" onclick="applyRealAndRandom()">현재까지 결과 유지 + 나머지 무작위</button>
+        <button class="sim-action-btn full-random" onclick="fullRandom()">전체 무작위 시뮬레이션</button>
+      </div>
       <nav class="tab-nav sub-tabs">
         <button class="tab-btn active" data-subtab="sim-group">조별리그</button>
         <button class="tab-btn" data-subtab="sim-tournament">토너먼트</button>
@@ -62,5 +67,6 @@
   <script src="js/tabs.js"></script>
   <script src="js/schedule.js"></script>
   <script src="js/tournament.js"></script>
+  <script src="js/simulation.js"></script>
 </body>
 </html>

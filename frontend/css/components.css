@@ -241,6 +241,34 @@
   position: relative;
 }
 
+.champion-banner {
+  position: absolute;
+  top: calc(50% - 195px);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.champion-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffd700;
+  white-space: nowrap;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+  letter-spacing: 0.02em;
+}
+
+.champion-flag {
+  width: 42px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+}
+
 .trophy {
   font-size: 2.5rem;
   position: absolute;
@@ -489,3 +517,225 @@
   border-bottom: 1px solid #2a4a8a;
   margin-bottom: 8px;
 }
+
+/* ───── 시뮬레이션 ───── */
+
+/* 액션 버튼 바 */
+.sim-action-bar {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #0a0a1e;
+  border-bottom: 1px solid #1e1e3e;
+  flex-wrap: wrap;
+}
+
+.sim-action-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.sim-action-btn.primary {
+  background: #0f2a50;
+  border-color: #4a90e2;
+  color: #4a90e2;
+}
+.sim-action-btn.primary:hover { background: #1a3a6a; }
+
+.sim-action-btn.random {
+  background: #0f3020;
+  border-color: #3ada80;
+  color: #3ada80;
+}
+.sim-action-btn.random:hover { background: #1a4a30; }
+
+.sim-action-btn.full-random {
+  background: #301020;
+  border-color: #da3a70;
+  color: #da3a70;
+}
+.sim-action-btn.full-random:hover { background: #4a1a30; }
+
+/* 2×6 그리드 */
+.sim-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 16px;
+}
+
+/* 조 카드 */
+.sim-group-card {
+  background: #111130;
+  border: 1px solid #1e1e3e;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.sim-group-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #4a90e2;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #2a4a8a;
+}
+
+/* 시뮬 순위표 (컬럼 수 적어서 좀 더 좁게) */
+.sim-standings-table th,
+.sim-standings-table td {
+  padding: 4px 6px;
+  font-size: 0.78rem;
+}
+
+/* 경기 카드 (점수 입력) */
+.sim-match-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 0;
+  border-bottom: 1px solid #1a1a3a;
+  font-size: 0.78rem;
+}
+.sim-match-card:last-child { border-bottom: none; }
+
+/* 실제 결과 있는 경기 — 약간 다른 배경으로 구분 */
+.sim-match-card.sim-real { background: #0e0e28; border-radius: 4px; padding: 5px 4px; }
+
+.sim-match-time {
+  color: #555;
+  font-size: 0.68rem;
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.sim-team {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sim-team.home { justify-content: flex-end; }
+.sim-team.away { justify-content: flex-start; }
+
+/* 점수 조작 영역 */
+.sim-score-ctrl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.sim-score-center {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.sim-btn {
+  background: #1a1a3e;
+  border: 1px solid #2a3a6a;
+  border-radius: 3px;
+  color: #4a90e2;
+  width: 22px;
+  height: 16px;
+  font-size: 0.55rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  font-family: inherit;
+}
+.sim-btn:hover { background: #2a2a5e; }
+
+.sim-score-val {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  min-width: 18px;
+  text-align: center;
+}
+
+.sim-sep {
+  color: #555;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* ───── 시뮬 토너먼트 브라켓 ───── */
+
+/* 팀 카드를 더 크게 해서 버튼이 들어갈 공간 확보 */
+#subtab-sim-tournament {
+  --match-h: 104px;
+}
+
+/* 시뮬 팀 행: 국기 이름 점수 ▲▼ */
+.sim-bracket-team {
+  padding: 2px 4px;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.sim-bracket-team .flag-icon {
+  width: 15px;
+  height: 10px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.sim-bt-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+.sim-bt-score {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #fff;
+  min-width: 13px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.sim-bt-ctrl {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.sim-bt-btn {
+  background: #1a1a3e;
+  border: 1px solid #2a3a6a;
+  border-radius: 2px;
+  color: #4a90e2;
+  width: 13px;
+  height: 13px;
+  font-size: 0.42rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  font-family: inherit;
+}
+.sim-bt-btn:hover { background: #2a3a6a; color: #7ab0f0; }

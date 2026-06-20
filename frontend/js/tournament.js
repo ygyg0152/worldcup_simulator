@@ -45,24 +45,26 @@ function renderBracketMatch(match, matchLabel) {
 }
 
 // 두 경기를 하나의 pair로 묶음 (연결선 표시용)
-function renderPair(m1, m2, side, labels) {
+function renderPair(m1, m2, side, labels, renderFn) {
+  renderFn = renderFn || renderBracketMatch;
   return `
     <div class="match-pair ${side}">
-      ${renderBracketMatch(m1, labels[m1?.id])}
-      ${renderBracketMatch(m2, labels[m2?.id])}
+      ${renderFn(m1, labels[m1?.id])}
+      ${renderFn(m2, labels[m2?.id])}
     </div>`;
 }
 
 // 한 쪽(left/right) 브라켓 렌더링
-function renderHalf(r32, r16, qf, sf, side, labels) {
+function renderHalf(r32, r16, qf, sf, side, labels, renderFn) {
+  renderFn = renderFn || renderBracketMatch;
   const r32cols = `
     <div class="bracket-col">
       <div class="bracket-col-label">32강</div>
       <div class="bracket-col-body">
-        ${renderPair(r32[0], r32[1], side, labels)}
-        ${renderPair(r32[2], r32[3], side, labels)}
-        ${renderPair(r32[4], r32[5], side, labels)}
-        ${renderPair(r32[6], r32[7], side, labels)}
+        ${renderPair(r32[0], r32[1], side, labels, renderFn)}
+        ${renderPair(r32[2], r32[3], side, labels, renderFn)}
+        ${renderPair(r32[4], r32[5], side, labels, renderFn)}
+        ${renderPair(r32[6], r32[7], side, labels, renderFn)}
       </div>
     </div>`;
 
@@ -70,8 +72,8 @@ function renderHalf(r32, r16, qf, sf, side, labels) {
     <div class="bracket-col">
       <div class="bracket-col-label">16강</div>
       <div class="bracket-col-body">
-        ${renderPair(r16[0], r16[1], side, labels)}
-        ${renderPair(r16[2], r16[3], side, labels)}
+        ${renderPair(r16[0], r16[1], side, labels, renderFn)}
+        ${renderPair(r16[2], r16[3], side, labels, renderFn)}
       </div>
     </div>`;
 
@@ -79,7 +81,7 @@ function renderHalf(r32, r16, qf, sf, side, labels) {
     <div class="bracket-col">
       <div class="bracket-col-label">8강</div>
       <div class="bracket-col-body">
-        ${renderPair(qf[0], qf[1], side, labels)}
+        ${renderPair(qf[0], qf[1], side, labels, renderFn)}
       </div>
     </div>`;
 
@@ -87,7 +89,7 @@ function renderHalf(r32, r16, qf, sf, side, labels) {
     <div class="bracket-col sf-col ${side}">
       <div class="bracket-col-label">4강</div>
       <div class="bracket-col-body single">
-        <div class="match-single">${renderBracketMatch(sf, labels[sf?.id])}</div>
+        <div class="match-single">${renderFn(sf, labels[sf?.id])}</div>
       </div>
     </div>`;
 
@@ -95,16 +97,9 @@ function renderHalf(r32, r16, qf, sf, side, labels) {
   return r32cols + r16col + qfcol + sfcol;
 }
 
-function renderTournament() {
-  const container = document.getElementById('subtab-schedule-tournament');
-  if (!matchesData || matchesData.length === 0) {
-    container.innerHTML = '<p>데이터 로딩 중...</p>';
-    return;
-  }
-
-  const sorted = matchesData
-    .filter(m => m.type !== 'group')
-    .sort((a, b) => Number(a.id) - Number(b.id));
+// 브라켓 HTML 생성 (일정탭 + 시뮬탭 공용, opts.renderMatch로 렌더 함수 교체 가능)
+function buildBracketHtml(matches, opts = {}) {
+  const sorted = [...matches].sort((a, b) => Number(a.id) - Number(b.id));
 
   const r32 = sorted.filter(m => m.type === 'r32');
   const r16 = sorted.filter(m => m.type === 'r16');
@@ -113,7 +108,6 @@ function renderTournament() {
   const finalMatch = sorted.find(m => m.type === 'final');
   const thirdMatch = sorted.find(m => m.type === 'third');
 
-  // 각 경기에 "32강 1경기" 형식 라벨 생성
   const typeKo = { r32: '32강', r16: '16강', qf: '8강', sf: '4강' };
   const labels = {};
   ['r32', 'r16', 'qf', 'sf'].forEach(type => {
@@ -124,30 +118,41 @@ function renderTournament() {
   if (finalMatch) labels[finalMatch.id] = '결승';
   if (thirdMatch) labels[thirdMatch.id] = '3위결정전';
 
-  const html = `
+  const renderFn = opts.renderMatch || renderBracketMatch;
+
+  return `
     <div class="bracket-wrapper">
       <div class="bracket-outer">
-        ${renderHalf(r32.slice(0,8), r16.slice(0,4), qf.slice(0,2), sf[0], 'left', labels)}
-
+        ${renderHalf(r32.slice(0,8), r16.slice(0,4), qf.slice(0,2), sf[0], 'left', labels, renderFn)}
         <div class="bracket-center">
           <div class="bracket-col-label">결승</div>
           <div class="bracket-center-body">
+            ${opts.champion ? `
+              <div class="champion-banner">
+                <div class="champion-name">${opts.champion.name} 우승!!</div>
+                <img src="${opts.champion.flag}" class="champion-flag">
+              </div>` : ''}
             <div class="trophy">🏆</div>
-            ${renderBracketMatch(finalMatch, labels[finalMatch?.id])}
+            ${renderFn(finalMatch, labels[finalMatch?.id])}
           </div>
         </div>
-
-        ${renderHalf(r32.slice(8,16), r16.slice(4,8), qf.slice(2,4), sf[1], 'right', labels)}
+        ${renderHalf(r32.slice(8,16), r16.slice(4,8), qf.slice(2,4), sf[1], 'right', labels, renderFn)}
       </div>
-
       ${thirdMatch ? `
         <div class="third-place-wrap">
           <div class="bracket-col-label">3위결정전</div>
-          ${renderBracketMatch(thirdMatch, labels[thirdMatch.id])}
+          ${renderFn(thirdMatch, labels[thirdMatch.id])}
         </div>` : ''}
     </div>`;
+}
 
-  container.innerHTML = html;
+function renderTournament() {
+  const container = document.getElementById('subtab-schedule-tournament');
+  if (!matchesData || matchesData.length === 0) {
+    container.innerHTML = '<p>데이터 로딩 중...</p>';
+    return;
+  }
+  container.innerHTML = buildBracketHtml(matchesData.filter(m => m.type !== 'group'));
 }
 
 document.addEventListener('DOMContentLoaded', () => {

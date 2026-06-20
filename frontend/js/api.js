@@ -3,7 +3,7 @@ const API_BASE = "http://localhost:3000/api";
 
 // FIFA 코드 → 한국어 팀명 매핑
 const TEAM_NAME_KO = {
-  MEX: "멕시코", RSA: "남아프리카공화국", KOR: "한국", CZE: "체코",
+  MEX: "멕시코", RSA: "남아프리카공화국", KOR: "대한민국", CZE: "체코",
   CAN: "캐나다", BIH: "보스니아 헤르체고비나", QAT: "카타르", SUI: "스위스",
   BRA: "브라질", MAR: "모로코", HAI: "아이티", SCO: "스코틀랜드",
   USA: "미국", PAR: "파라과이", AUS: "호주", TUR: "터키",
