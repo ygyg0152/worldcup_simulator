@@ -101,12 +101,38 @@ function renderHalf(r32, r16, qf, sf, side, labels, renderFn) {
 function buildBracketHtml(matches, opts = {}) {
   const sorted = [...matches].sort((a, b) => Number(a.id) - Number(b.id));
 
-  const r32 = sorted.filter(m => m.type === 'r32');
-  const r16 = sorted.filter(m => m.type === 'r16');
-  const qf  = sorted.filter(m => m.type === 'qf');
   const sf  = sorted.filter(m => m.type === 'sf');
   const finalMatch = sorted.find(m => m.type === 'final');
   const thirdMatch = sorted.find(m => m.type === 'third');
+
+  // "Winner/Loser Match X" 레이블 → match 객체
+  const matchById = {};
+  sorted.forEach(m => { matchById[String(m.id)] = m; });
+  function src(label) {
+    const m = label?.match(/(?:Winner|Loser) Match (\d+)/);
+    return m ? matchById[m[1]] : null;
+  }
+
+  // SF → QF → R16 → R32 순으로 정확한 브라켓 트리 구성
+  function buildHalfArrays(sfMatch) {
+    const qf1 = src(sfMatch.home_team_label);
+    const qf2 = src(sfMatch.away_team_label);
+    const r16a = src(qf1?.home_team_label), r16b = src(qf1?.away_team_label);
+    const r16c = src(qf2?.home_team_label), r16d = src(qf2?.away_team_label);
+    return {
+      r32: [
+        src(r16a?.home_team_label), src(r16a?.away_team_label),
+        src(r16b?.home_team_label), src(r16b?.away_team_label),
+        src(r16c?.home_team_label), src(r16c?.away_team_label),
+        src(r16d?.home_team_label), src(r16d?.away_team_label),
+      ],
+      r16: [r16a, r16b, r16c, r16d],
+      qf:  [qf1, qf2],
+    };
+  }
+
+  const left  = buildHalfArrays(sf[0]);
+  const right = buildHalfArrays(sf[1]);
 
   const typeKo = { r32: '32강', r16: '16강', qf: '8강', sf: '4강' };
   const labels = {};
@@ -123,7 +149,7 @@ function buildBracketHtml(matches, opts = {}) {
   return `
     <div class="bracket-wrapper">
       <div class="bracket-outer">
-        ${renderHalf(r32.slice(0,8), r16.slice(0,4), qf.slice(0,2), sf[0], 'left', labels, renderFn)}
+        ${renderHalf(left.r32, left.r16, left.qf, sf[0], 'left', labels, renderFn)}
         <div class="bracket-center">
           <div class="bracket-col-label">결승</div>
           <div class="bracket-center-body">
@@ -136,7 +162,7 @@ function buildBracketHtml(matches, opts = {}) {
             ${renderFn(finalMatch, labels[finalMatch?.id])}
           </div>
         </div>
-        ${renderHalf(r32.slice(8,16), r16.slice(4,8), qf.slice(2,4), sf[1], 'right', labels, renderFn)}
+        ${renderHalf(right.r32, right.r16, right.qf, sf[1], 'right', labels, renderFn)}
       </div>
       ${thirdMatch ? `
         <div class="third-place-wrap">

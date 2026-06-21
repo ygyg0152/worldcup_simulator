@@ -248,6 +248,14 @@ function buildSimKnockoutData() {
   const finalM = sorted.find(m => m.type === 'final');
   const thirdM = sorted.find(m => m.type === 'third');
 
+  // 레이블 "Winner/Loser Match X" → 해당 match 객체 참조
+  const matchById = {};
+  sorted.forEach(m => { matchById[String(m.id)] = m; });
+  function src(label) {
+    const m = label?.match(/(?:Winner|Loser) Match (\d+)/);
+    return m ? matchById[m[1]] : null;
+  }
+
   // r32: 조별 진출팀
   r32.forEach(m => {
     m.sim_home_team_id = resolveLabel(m.home_team_label, qual);
@@ -258,11 +266,22 @@ function buildSimKnockoutData() {
   const winner = m => m.sim_home_score >= m.sim_away_score ? m.sim_home_team_id : m.sim_away_team_id;
   const loser  = m => m.sim_home_score >= m.sim_away_score ? m.sim_away_team_id : m.sim_home_team_id;
 
-  r16.forEach((m, i) => { m.sim_home_team_id = winner(r32[i*2]); m.sim_away_team_id = winner(r32[i*2+1]); });
-  qf.forEach((m, i)  => { m.sim_home_team_id = winner(r16[i*2]); m.sim_away_team_id = winner(r16[i*2+1]); });
-  sf.forEach((m, i)  => { m.sim_home_team_id = winner(qf[i*2]);  m.sim_away_team_id = winner(qf[i*2+1]); });
-  if (finalM) { finalM.sim_home_team_id = winner(sf[0]); finalM.sim_away_team_id = winner(sf[1]); }
-  if (thirdM) { thirdM.sim_home_team_id = loser(sf[0]);  thirdM.sim_away_team_id = loser(sf[1]); }
+  // r16~sf: "Winner Match X" 레이블로 실제 매치 참조해서 승자 전파
+  [...r16, ...qf, ...sf].forEach(m => {
+    const hm = src(m.home_team_label), am = src(m.away_team_label);
+    if (hm) m.sim_home_team_id = winner(hm);
+    if (am) m.sim_away_team_id = winner(am);
+  });
+  if (finalM) {
+    const hm = src(finalM.home_team_label), am = src(finalM.away_team_label);
+    if (hm) finalM.sim_home_team_id = winner(hm);
+    if (am) finalM.sim_away_team_id = winner(am);
+  }
+  if (thirdM) {
+    const hm = src(thirdM.home_team_label), am = src(thirdM.away_team_label);
+    if (hm) thirdM.sim_home_team_id = loser(hm);
+    if (am) thirdM.sim_away_team_id = loser(am);
+  }
 
   return sorted;
 }
