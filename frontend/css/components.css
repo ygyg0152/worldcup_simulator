@@ -8,7 +8,7 @@
   --conn: 8px;       /* 연결선 팔 길이 */
   --col-gap: 12px;   /* 컬럼 사이 간격 */
   --col-w: 110px;    /* 컬럼 너비 */
-  --total-h: 640px;  /* 브라켓 전체 높이 */
+  --total-h: 960px;  /* 브라켓 전체 높이 (R32 pair당 240px, match 2×104px 수용) */
 }
 
 .bracket-wrapper {
