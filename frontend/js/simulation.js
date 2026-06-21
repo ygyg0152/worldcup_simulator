@@ -334,9 +334,11 @@ function buildSimKnockoutData() {
     m.sim_away_team_id = resolveLabel(m.away_team_label, qual);
   });
 
-  // 동점이면 홈팀 승 (시뮬레이션 편의상). sim_played === false이면 미확정(0)
-  const winner = m => m.sim_played === false ? '0' : (m.sim_home_score >= m.sim_away_score ? m.sim_home_team_id : m.sim_away_team_id);
-  const loser  = m => m.sim_played === false ? '0' : (m.sim_home_score >= m.sim_away_score ? m.sim_away_team_id : m.sim_home_team_id);
+  // 두 팀이 모두 확정돼야 승자/패자 전파. 팀 미정(0/'')이면 '0' 반환
+  const bothTeams = m => m.sim_home_team_id && m.sim_home_team_id !== '0'
+                      && m.sim_away_team_id && m.sim_away_team_id !== '0';
+  const winner = m => bothTeams(m) ? (m.sim_home_score >= m.sim_away_score ? m.sim_home_team_id : m.sim_away_team_id) : '0';
+  const loser  = m => bothTeams(m) ? (m.sim_home_score >= m.sim_away_score ? m.sim_away_team_id : m.sim_home_team_id) : '0';
 
   // r16~sf: "Winner Match X" 레이블로 실제 매치 참조해서 승자 전파
   [...r16, ...qf, ...sf].forEach(m => {
@@ -524,7 +526,7 @@ function doApplyRealReset() {
     } else {
       m.sim_home_score = 0;
       m.sim_away_score = 0;
-      m.sim_played = false;
+      delete m.sim_played;
     }
   });
   syncConfirmButtons();
