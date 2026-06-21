@@ -95,7 +95,7 @@ function calcSimGroupStandings(groupName) {
   const s = {};
   ids.forEach(id => { s[id] = { team_id: id, mp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0 }; });
 
-  matches.forEach(m => {
+  matches.filter(m => m.sim_played !== false).forEach(m => {
     const hs = m.sim_home_score, as = m.sim_away_score;
     s[m.home_team_id].mp++; s[m.away_team_id].mp++;
     s[m.home_team_id].gf += hs; s[m.home_team_id].ga += as; s[m.home_team_id].gd += hs - as;
@@ -489,8 +489,6 @@ function doApplyRealKeep() {
       m.sim_home_score = Number(m.home_score);
       m.sim_away_score = Number(m.away_score);
       m.sim_played = true;
-    } else {
-      delete m.sim_played;
     }
   });
   simKnockoutMatches.forEach(m => {
@@ -498,8 +496,6 @@ function doApplyRealKeep() {
       m.sim_home_score = Number(m.home_score);
       m.sim_away_score = Number(m.away_score);
       m.sim_played = true;
-    } else {
-      delete m.sim_played;
     }
   });
   syncConfirmButtons();
