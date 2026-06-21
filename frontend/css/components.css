@@ -4,7 +4,7 @@
 
 :root {
   --header-h: 18px;  /* 경기 라벨 헤더 높이 */
-  --match-h: 88px;   /* 경기 카드 높이 (헤더 18 + 팀 29×2 + 여백 12) */
+  --match-h: 104px;  /* 경기 카드 높이 */
   --conn: 8px;       /* 연결선 팔 길이 */
   --col-gap: 12px;   /* 컬럼 사이 간격 */
   --col-w: 110px;    /* 컬럼 너비 */
@@ -520,25 +520,33 @@
 
 /* ───── 시뮬레이션 ───── */
 
+/* 시뮬 탭 상단 바: 서브탭 왼쪽 + 액션 버튼 오른쪽 */
+.sim-top-bar {
+  display: flex;
+  align-items: center;
+  background-color: #0d0d25;
+}
+
 /* 액션 버튼 바 */
 .sim-action-bar {
   display: flex;
-  gap: 10px;
-  padding: 12px 16px;
-  background: #0a0a1e;
-  border-bottom: 1px solid #1e1e3e;
-  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 16px;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
 }
 
 .sim-action-btn {
-  padding: 8px 16px;
+  padding: 6px 14px;
   border-radius: 6px;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   border: 1px solid;
   transition: background 0.15s;
   font-family: inherit;
+  white-space: nowrap;
 }
 
 .sim-action-btn.primary {
@@ -676,11 +684,6 @@
 }
 
 /* ───── 시뮬 토너먼트 브라켓 ───── */
-
-/* 팀 카드를 더 크게 해서 버튼이 들어갈 공간 확보 */
-#subtab-sim-tournament {
-  --match-h: 104px;
-}
 
 /* 시뮬 팀 행: 국기 이름 점수 ▲▼ */
 .sim-bracket-team {
