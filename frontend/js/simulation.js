@@ -22,7 +22,7 @@ function initSimKnockout() {
 function toggleSimPlayed(matchId) {
   const m = simMatches.find(m => m.id === matchId);
   if (!m) return;
-  if (m.sim_played === true) delete m.sim_played;
+  if (m.sim_played === true) m.sim_played = false;
   else m.sim_played = true;
 
   const btn = document.querySelector(`[data-confirm-id="${matchId}"]`);
@@ -537,7 +537,6 @@ function doApplyRealReset() {
 
 function applyRealAndRandom() {
   initSimKnockout();
-  clearSimPlayedFlags();
   simMatches.forEach(m => {
     if (m.finished === true || m.finished === 'TRUE') {
       m.sim_home_score = Number(m.home_score);
@@ -547,6 +546,7 @@ function applyRealAndRandom() {
       m.sim_home_score = sc.home;
       m.sim_away_score = sc.away;
     }
+    m.sim_played = true;
   });
   simKnockoutMatches.forEach(m => {
     if (m.finished === true || m.finished === 'TRUE') {
@@ -557,23 +557,27 @@ function applyRealAndRandom() {
       m.sim_home_score = sc.home;
       m.sim_away_score = sc.away;
     }
+    m.sim_played = true;
   });
+  syncConfirmButtons();
   rerenderAllSimGroups();
 }
 
 function fullRandom() {
   initSimKnockout();
-  clearSimPlayedFlags();
   simMatches.forEach(m => {
     const sc = randomScore();
     m.sim_home_score = sc.home;
     m.sim_away_score = sc.away;
+    m.sim_played = true;
   });
   simKnockoutMatches.forEach(m => {
     const sc = randomScore();
     m.sim_home_score = sc.home;
     m.sim_away_score = sc.away;
+    m.sim_played = true;
   });
+  syncConfirmButtons();
   rerenderAllSimGroups();
 }
 
