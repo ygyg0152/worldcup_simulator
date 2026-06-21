@@ -173,4 +173,62 @@ async function renderSchedule() {
   }
 }
 
-document.addEventListener("DOMContentLoaded", renderSchedule);
+// 각 조 3위팀 순위표 렌더링 (승점 → 득실차 → 다득점)
+function renderThirdsStandings() {
+  const container = document.getElementById('subtab-schedule-thirds');
+  if (!groupsData || groupsData.length === 0) {
+    container.innerHTML = '<p class="placeholder">데이터 로딩 중...</p>';
+    return;
+  }
+
+  const thirds = groupsData.map(group => {
+    const ranked = sortTeams(group.teams);
+    const t = ranked[2];
+    if (!t) return null;
+    return { group: group.name, ...t };
+  }).filter(Boolean);
+
+  thirds.sort((a, b) =>
+    Number(b.pts) - Number(a.pts) ||
+    Number(b.gd)  - Number(a.gd)  ||
+    Number(b.gf)  - Number(a.gf)
+  );
+
+  const rows = thirds.map((t, i) => {
+    const team = teamsMap[t.team_id] || {};
+    const flag = team.flag ? `<img src="${team.flag}" class="flag-icon">` : '';
+    const name = team.name_ko || team.name_en || `팀 ${t.team_id}`;
+    const gd = Number(t.gd);
+    const qualified = i < 8 ? 'thirds-qualified' : '';
+    return `<tr class="${qualified}">
+      <td>${i + 1}</td>
+      <td>${t.group}</td>
+      <td class="team-cell">${flag}<span>${name}</span></td>
+      <td>${t.mp}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
+      <td>${t.gf}</td><td>${t.ga}</td>
+      <td>${gd >= 0 ? '+' : ''}${gd}</td>
+      <td><strong>${t.pts}</strong></td>
+    </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div style="padding: 16px; overflow-x: auto;">
+      <table class="standings-table thirds-table">
+        <thead>
+          <tr><th>#</th><th>조</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>실</th><th>차</th><th>승점</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  renderSchedule();
+
+  document.querySelectorAll('[data-subtab="schedule-thirds"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await loadAllData();
+      renderThirdsStandings();
+    });
+  });
+});

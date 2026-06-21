@@ -35,6 +35,7 @@ function changeSimScore(matchId, side, delta) {
   if (standingsEl) standingsEl.innerHTML = simStandingsHtml(m.group);
 
   refreshSimTournamentIfVisible();
+  refreshSimThirdsIfVisible();
 }
 
 // ─── 순위 계산 ────────────────────────────────────────────────────
@@ -217,6 +218,55 @@ function simGroupCardHtml(groupName) {
     </div>`;
 }
 
+// ─── 탭 렌더링: 조3위 순위 ───────────────────────────────────────
+function renderSimThirdsTab() {
+  const container = document.getElementById('subtab-sim-thirds');
+  if (!simMatches.length) {
+    container.innerHTML = '<p class="placeholder">데이터 로딩 중...</p>';
+    return;
+  }
+
+  const groups = [...new Set(simMatches.map(m => m.group))].sort();
+  const thirds = groups.map(g => {
+    const st = calcSimGroupStandings(g);
+    if (!st[2]) return null;
+    return { group: g, ...st[2] };
+  }).filter(Boolean);
+
+  thirds.sort((a, b) =>
+    b.pts - a.pts ||
+    b.gd  - a.gd  ||
+    b.gf  - a.gf
+  );
+
+  const rows = thirds.map((t, i) => {
+    const team = teamsMap[t.team_id] || {};
+    const flag = team.flag ? `<img src="${team.flag}" class="flag-icon">` : '';
+    const name = team.name_ko || team.name_en || `팀 ${t.team_id}`;
+    const gd = t.gd;
+    const qualified = i < 8 ? 'thirds-qualified' : '';
+    return `<tr class="${qualified}">
+      <td>${i + 1}</td>
+      <td>${t.group}</td>
+      <td class="team-cell">${flag}<span>${name}</span></td>
+      <td>${t.mp}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
+      <td>${t.gf}</td><td>${t.ga}</td>
+      <td>${gd >= 0 ? '+' : ''}${gd}</td>
+      <td><strong>${t.pts}</strong></td>
+    </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div style="padding: 16px; overflow-x: auto;">
+      <table class="standings-table thirds-table">
+        <thead>
+          <tr><th>#</th><th>조</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th><th>득</th><th>실</th><th>차</th><th>승점</th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
 // ─── 탭 렌더링: 조별리그 ─────────────────────────────────────────
 function renderSimGroupTab() {
   const container = document.getElementById('subtab-sim-group');
@@ -367,6 +417,11 @@ function refreshSimTournamentIfVisible() {
   if (el?.classList.contains('active')) renderSimTournamentTab();
 }
 
+function refreshSimThirdsIfVisible() {
+  const el = document.getElementById('subtab-sim-thirds');
+  if (el?.classList.contains('active')) renderSimThirdsTab();
+}
+
 // ─── 전체 점수 표시 갱신 ─────────────────────────────────────────
 function rerenderAllSimGroups() {
   const groups = [...new Set(simMatches.map(m => m.group))].sort();
@@ -380,6 +435,7 @@ function rerenderAllSimGroups() {
     if (standingsEl) standingsEl.innerHTML = simStandingsHtml(g);
   });
   refreshSimTournamentIfVisible();
+  refreshSimThirdsIfVisible();
 }
 
 // ─── 액션 버튼 ───────────────────────────────────────────────────
@@ -457,6 +513,10 @@ document.addEventListener('DOMContentLoaded', () => {
       initSimKnockout();
       renderSimGroupTab();
     });
+  });
+
+  document.querySelectorAll('[data-subtab="sim-thirds"]').forEach(btn => {
+    btn.addEventListener('click', () => { initSim(); renderSimThirdsTab(); });
   });
 
   document.querySelectorAll('[data-subtab="sim-tournament"]').forEach(btn => {
