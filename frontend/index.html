@@ -72,6 +72,16 @@
 
   </main>
 
+  <!-- 현재결과 반영 옵션 팝업 -->
+  <div id="apply-real-modal" class="modal-overlay">
+    <div class="apply-real-dialog">
+      <div class="apply-real-title">나머지 경기를 어떻게 처리할까요?</div>
+      <button class="sim-action-btn primary" onclick="doApplyRealKeep()">나머지 결과는 유지하기</button>
+      <button class="sim-action-btn full-random" onclick="doApplyRealReset()">나머지 결과 초기화하기</button>
+      <button class="apply-real-cancel" onclick="closeApplyRealModal()">취소</button>
+    </div>
+  </div>
+
   <!-- JS는 body 맨 아래에: HTML이 다 로드된 후 실행되도록 -->
   <script src="js/api.js"></script>
   <script src="js/tabs.js"></script>

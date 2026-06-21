@@ -545,6 +545,39 @@
 
 /* ───── 시뮬레이션 ───── */
 
+/* 현재결과 반영 옵션 팝업 */
+.apply-real-dialog {
+  background: #0d0d2b;
+  border: 1px solid #2a4a8a;
+  border-radius: 12px;
+  padding: 24px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.apply-real-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ccc;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.apply-real-cancel {
+  background: none;
+  border: 1px solid #333;
+  color: #666;
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+.apply-real-cancel:hover { color: #aaa; border-color: #555; }
+
 /* 시뮬 탭 상단 바: 서브탭 왼쪽 + 액션 버튼 오른쪽 */
 .sim-top-bar {
   display: flex;
@@ -693,6 +726,30 @@
   font-family: inherit;
 }
 .sim-btn:hover { background: #2a2a5e; }
+
+.sim-confirm-btn {
+  background: #1a1a3e;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #555;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 7px;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.sim-confirm-btn:hover {
+  border-color: #4a90e2;
+  color: #4a90e2;
+}
+.sim-confirm-btn.confirmed {
+  background: #0d2a1a;
+  border-color: #3ada80;
+  color: #3ada80;
+}
 
 .sim-score-val {
   font-size: 1rem;

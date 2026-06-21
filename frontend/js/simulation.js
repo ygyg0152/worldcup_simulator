@@ -18,6 +18,22 @@ function initSimKnockout() {
     .map(m => ({ ...m, sim_home_score: 0, sim_away_score: 0 }));
 }
 
+// ─── 결과 확정 토글 ───────────────────────────────────────────────
+function toggleSimPlayed(matchId) {
+  const m = simMatches.find(m => m.id === matchId);
+  if (!m) return;
+  if (m.sim_played === true) delete m.sim_played;
+  else m.sim_played = true;
+
+  const btn = document.querySelector(`[data-confirm-id="${matchId}"]`);
+  if (btn) {
+    const confirmed = m.sim_played === true;
+    btn.classList.toggle('confirmed', confirmed);
+  }
+  refreshSimTournamentIfVisible();
+  refreshSimThirdsIfVisible();
+}
+
 // ─── 점수 변경 (▲▼ 버튼 핸들러) ──────────────────────────────────
 function changeSimScore(matchId, side, delta) {
   const m = simMatches.find(m => m.id === matchId);
@@ -101,6 +117,8 @@ function getSimQualifiers() {
   const groups = [...new Set(simMatches.map(m => m.group))].sort();
 
   groups.forEach(g => {
+    const matches = simMatches.filter(m => m.group === g);
+    if (matches.some(m => m.sim_played === false)) return;
     const st = calcSimGroupStandings(g);
     if (st[0]) qual[`Winner Group ${g}`]    = st[0].team_id;
     if (st[1]) qual[`Runner-up Group ${g}`] = st[1].team_id;
@@ -186,6 +204,7 @@ function simMatchListHtml(groupName) {
     const time = toKST(m.local_date, m.stadium_id);
     const isReal = m.finished === true || m.finished === 'TRUE';
 
+    const confirmed = m.sim_played === true;
     return `
       <div class="sim-match-card ${isReal ? 'sim-real' : ''}">
         <span class="sim-match-time">${time}</span>
@@ -204,6 +223,9 @@ function simMatchListHtml(groupName) {
           <button class="sim-btn" onclick="changeSimScore('${m.id}','away',-1)">▼</button>
         </div>
         <span class="sim-team away">${awayName}${awayFlag}</span>
+        <button class="sim-confirm-btn ${confirmed ? 'confirmed' : ''}"
+                data-confirm-id="${m.id}"
+                onclick="toggleSimPlayed('${m.id}')">확정</button>
       </div>`;
   }).join('');
 }
@@ -312,9 +334,9 @@ function buildSimKnockoutData() {
     m.sim_away_team_id = resolveLabel(m.away_team_label, qual);
   });
 
-  // 동점이면 홈팀 승 (시뮬레이션 편의상)
-  const winner = m => m.sim_home_score >= m.sim_away_score ? m.sim_home_team_id : m.sim_away_team_id;
-  const loser  = m => m.sim_home_score >= m.sim_away_score ? m.sim_away_team_id : m.sim_home_team_id;
+  // 동점이면 홈팀 승 (시뮬레이션 편의상). sim_played === false이면 미확정(0)
+  const winner = m => m.sim_played === false ? '0' : (m.sim_home_score >= m.sim_away_score ? m.sim_home_team_id : m.sim_away_team_id);
+  const loser  = m => m.sim_played === false ? '0' : (m.sim_home_score >= m.sim_away_score ? m.sim_away_team_id : m.sim_home_team_id);
 
   // r16~sf: "Winner Match X" 레이블로 실제 매치 참조해서 승자 전파
   [...r16, ...qf, ...sf].forEach(m => {
@@ -439,25 +461,83 @@ function rerenderAllSimGroups() {
 }
 
 // ─── 액션 버튼 ───────────────────────────────────────────────────
+function clearSimPlayedFlags() {
+  simMatches.forEach(m => { delete m.sim_played; });
+  simKnockoutMatches.forEach(m => { delete m.sim_played; });
+}
+
+function syncConfirmButtons() {
+  simMatches.forEach(m => {
+    const btn = document.querySelector(`[data-confirm-id="${m.id}"]`);
+    if (btn) btn.classList.toggle('confirmed', m.sim_played === true);
+  });
+}
+
 function applyRealResults() {
+  document.getElementById('apply-real-modal').classList.add('active');
+}
+
+function closeApplyRealModal() {
+  document.getElementById('apply-real-modal').classList.remove('active');
+}
+
+function doApplyRealKeep() {
+  closeApplyRealModal();
   initSimKnockout();
   simMatches.forEach(m => {
     if (m.finished === true || m.finished === 'TRUE') {
       m.sim_home_score = Number(m.home_score);
       m.sim_away_score = Number(m.away_score);
+      m.sim_played = true;
+    } else {
+      delete m.sim_played;
     }
   });
   simKnockoutMatches.forEach(m => {
     if (m.finished === true || m.finished === 'TRUE') {
       m.sim_home_score = Number(m.home_score);
       m.sim_away_score = Number(m.away_score);
+      m.sim_played = true;
+    } else {
+      delete m.sim_played;
     }
   });
+  syncConfirmButtons();
+  rerenderAllSimGroups();
+}
+
+function doApplyRealReset() {
+  closeApplyRealModal();
+  initSimKnockout();
+  simMatches.forEach(m => {
+    if (m.finished === true || m.finished === 'TRUE') {
+      m.sim_home_score = Number(m.home_score);
+      m.sim_away_score = Number(m.away_score);
+      m.sim_played = true;
+    } else {
+      m.sim_home_score = 0;
+      m.sim_away_score = 0;
+      m.sim_played = false;
+    }
+  });
+  simKnockoutMatches.forEach(m => {
+    if (m.finished === true || m.finished === 'TRUE') {
+      m.sim_home_score = Number(m.home_score);
+      m.sim_away_score = Number(m.away_score);
+      m.sim_played = true;
+    } else {
+      m.sim_home_score = 0;
+      m.sim_away_score = 0;
+      m.sim_played = false;
+    }
+  });
+  syncConfirmButtons();
   rerenderAllSimGroups();
 }
 
 function applyRealAndRandom() {
   initSimKnockout();
+  clearSimPlayedFlags();
   simMatches.forEach(m => {
     if (m.finished === true || m.finished === 'TRUE') {
       m.sim_home_score = Number(m.home_score);
@@ -483,6 +563,7 @@ function applyRealAndRandom() {
 
 function fullRandom() {
   initSimKnockout();
+  clearSimPlayedFlags();
   simMatches.forEach(m => {
     const sc = randomScore();
     m.sim_home_score = sc.home;
