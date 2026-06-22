@@ -44,15 +44,17 @@ function toKST(localDateStr, stadiumId) {
 }
 
 // 전역 데이터 저장소
-let teamsMap = {};   // { "1": { name_en, flag, ... }, ... }
-let groupsData = []; // 조별 순위 데이터
-let matchesData = []; // 경기 목록
+let teamsMap = {};     // { "1": { name_en, flag, ... }, ... }
+let groupsData = [];   // 조별 순위 데이터
+let matchesData = [];  // 경기 목록
+let stadiumsMap = {};  // { "1": { name_en, city_en, ... }, ... }
 
 async function loadAllData() {
-  const [teamsRes, groupsRes, matchesRes] = await Promise.all([
+  const [teamsRes, groupsRes, matchesRes, stadiumsRes] = await Promise.all([
     fetch(`${API_BASE}/teams`).then(r => r.json()),
     fetch(`${API_BASE}/groups`).then(r => r.json()),
     fetch(`${API_BASE}/matches`).then(r => r.json()),
+    fetch(`${API_BASE}/stadiums`).then(r => r.json()),
   ]);
 
   teamsRes.teams.forEach(team => {
@@ -62,4 +64,7 @@ async function loadAllData() {
 
   groupsData = groupsRes.groups.sort((a, b) => a.name.localeCompare(b.name));
   matchesData = matchesRes.games;
+
+  const stadList = stadiumsRes.stadiums || (Array.isArray(stadiumsRes) ? stadiumsRes : []);
+  stadList.forEach(s => { stadiumsMap[String(s.id)] = s; });
 }

@@ -15,7 +15,7 @@ function initSimKnockout() {
   if (simKnockoutMatches.length > 0) return;
   simKnockoutMatches = matchesData
     .filter(m => m.type !== 'group')
-    .map(m => ({ ...m, sim_home_score: 0, sim_away_score: 0 }));
+    .map(m => ({ ...m, sim_home_score: 0, sim_away_score: 0, sim_home_penalty: 0, sim_away_penalty: 0 }));
 }
 
 // ─── 결과 확정 토글 ───────────────────────────────────────────────
@@ -337,8 +337,20 @@ function buildSimKnockoutData() {
   // 두 팀이 모두 확정돼야 승자/패자 전파. 팀 미정(0/'')이면 '0' 반환
   const bothTeams = m => m.sim_home_team_id && m.sim_home_team_id !== '0'
                       && m.sim_away_team_id && m.sim_away_team_id !== '0';
-  const winner = m => bothTeams(m) ? (m.sim_home_score >= m.sim_away_score ? m.sim_home_team_id : m.sim_away_team_id) : '0';
-  const loser  = m => bothTeams(m) ? (m.sim_home_score >= m.sim_away_score ? m.sim_away_team_id : m.sim_home_team_id) : '0';
+  const winner = m => {
+    if (!bothTeams(m)) return '0';
+    const hs = m.sim_home_score, as = m.sim_away_score;
+    if (hs > as) return m.sim_home_team_id;
+    if (as > hs) return m.sim_away_team_id;
+    return (m.sim_home_penalty || 0) >= (m.sim_away_penalty || 0) ? m.sim_home_team_id : m.sim_away_team_id;
+  };
+  const loser = m => {
+    if (!bothTeams(m)) return '0';
+    const hs = m.sim_home_score, as = m.sim_away_score;
+    if (hs > as) return m.sim_away_team_id;
+    if (as > hs) return m.sim_home_team_id;
+    return (m.sim_home_penalty || 0) >= (m.sim_away_penalty || 0) ? m.sim_away_team_id : m.sim_home_team_id;
+  };
 
   // r16~sf: "Winner Match X" 레이블로 실제 매치 참조해서 승자 전파
   [...r16, ...qf, ...sf].forEach(m => {
@@ -395,11 +407,21 @@ function renderSimBracketTeam(match, side, isWinner) {
 function renderSimBracketMatch(match, matchLabel) {
   if (!match) return '<div class="bracket-match phantom"></div>';
   const hs = match.sim_home_score, as = match.sim_away_score;
+  const hp = match.sim_home_penalty || 0, ap = match.sim_away_penalty || 0;
+  const bothKnown = match.sim_home_team_id && match.sim_home_team_id !== '0'
+                  && match.sim_away_team_id && match.sim_away_team_id !== '0';
+  let homeWins = false, awayWins = false;
+  if (bothKnown) {
+    if (hs > as)       homeWins = true;
+    else if (as > hs)  awayWins = true;
+    else if (hp > ap)  homeWins = true;
+    else               awayWins = true;
+  }
   return `
-    <div class="bracket-match">
+    <div class="bracket-match bracket-match-click" data-match-id="${match.id}" onclick="handleSimMatchClick(event,'${match.id}')">
       ${matchLabel ? `<div class="match-header">${matchLabel}</div>` : ''}
-      ${renderSimBracketTeam(match, 'home', hs > as)}
-      ${renderSimBracketTeam(match, 'away', as > hs)}
+      ${renderSimBracketTeam(match, 'home', homeWins)}
+      ${renderSimBracketTeam(match, 'away', awayWins)}
     </div>`;
 }
 
@@ -410,6 +432,138 @@ function changeSimKnockoutScore(matchId, side, delta) {
   if (side === 'home') m.sim_home_score = Math.max(0, m.sim_home_score + delta);
   else                 m.sim_away_score = Math.max(0, m.sim_away_score + delta);
   renderSimTournamentTab();
+}
+
+// ─── 시뮬 토너먼트 경기 모달 ──────────────────────────────────────
+let _simModalMatchId = null;
+
+function handleSimMatchClick(event, matchId) {
+  if (event.target.closest('button')) return;
+  openSimMatchModal(matchId);
+}
+
+function openSimMatchModal(matchId) {
+  _simModalMatchId = matchId;
+  document.getElementById('sim-match-modal')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'sim-match-modal';
+  overlay.className = 'tmd-overlay';
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) { overlay.remove(); _simModalMatchId = null; }
+  });
+  document.body.appendChild(overlay);
+
+  const box = document.createElement('div');
+  box.id = 'sim-match-modal-box';
+  box.className = 'tmd-box';
+  overlay.appendChild(box);
+
+  refreshSimMatchModal();
+}
+
+function closeSimMatchModal() {
+  document.getElementById('sim-match-modal')?.remove();
+  _simModalMatchId = null;
+}
+
+function refreshSimMatchModal() {
+  const box = document.getElementById('sim-match-modal-box');
+  if (!box || !_simModalMatchId) return;
+  box.innerHTML = buildSimMatchModalHtml(_simModalMatchId);
+}
+
+function buildSimMatchModalHtml(matchId) {
+  const simKnockout = buildSimKnockoutData();
+  const match = simKnockout.find(m => m.id === matchId);
+  if (!match) return '';
+
+  const hs = match.sim_home_score, as = match.sim_away_score;
+  const hp = match.sim_home_penalty || 0;
+  const ap = match.sim_away_penalty || 0;
+  const isDraw = hs === as;
+
+  const homeTeamId = match.sim_home_team_id;
+  const awayTeamId = match.sim_away_team_id;
+  const homeTeam = homeTeamId && homeTeamId !== '0' ? teamsMap[homeTeamId] : null;
+  const awayTeam = awayTeamId && awayTeamId !== '0' ? teamsMap[awayTeamId] : null;
+  const homeName = homeTeam?.name_ko || '미정';
+  const awayName = awayTeam?.name_ko || '미정';
+  const homeFlag = homeTeam?.flag ? `<img src="${homeTeam.flag}" class="flag-icon">` : '';
+  const awayFlag = awayTeam?.flag ? `<img src="${awayTeam.flag}" class="flag-icon">` : '';
+
+  const label = getMatchLabel(matchId);
+  const stadium = stadiumsMap[String(match.stadium_id)];
+  const stadiumName = stadium?.name_en || stadium?.name || '';
+  const matchTime = toKST(match.local_date, match.stadium_id);
+
+  let homeWins = false, awayWins = false;
+  if (homeTeam && awayTeam) {
+    if (hs > as)      homeWins = true;
+    else if (as > hs) awayWins = true;
+    else if (hp > ap) homeWins = true;
+    else              awayWins = true;
+  }
+  const showPen = isDraw && homeTeam && awayTeam;
+
+  function scoreCtrl(side) {
+    const score = side === 'home' ? hs : as;
+    const known = side === 'home' ? !!homeTeam : !!awayTeam;
+    if (!known) return '<span class="tmd-score">—</span>';
+    return `
+      <div class="tmd-ctrl">
+        <button class="tmd-btn" onclick="changeSimModalScore('${matchId}','${side}',1)">▲</button>
+        <span class="tmd-score">${score}</span>
+        <button class="tmd-btn" onclick="changeSimModalScore('${matchId}','${side}',-1)">▼</button>
+      </div>`;
+  }
+
+  function penCtrl(side) {
+    const pen = side === 'home' ? hp : ap;
+    const known = side === 'home' ? !!homeTeam : !!awayTeam;
+    if (!known) return '<div class="tmd-pen-col"></div>';
+    return `
+      <div class="tmd-pen-col">
+        <div class="tmd-ctrl tmd-pen-ctrl">
+          <button class="tmd-btn tmd-pen-btn" onclick="changeSimModalPenalty('${matchId}','${side}',1)">▲</button>
+          <span class="tmd-pen tmd-pen-yellow">${pen}</span>
+          <button class="tmd-btn tmd-pen-btn" onclick="changeSimModalPenalty('${matchId}','${side}',-1)">▼</button>
+        </div>
+      </div>`;
+  }
+
+  return `
+    <button class="tmd-close" onclick="closeSimMatchModal()">✕</button>
+    <div class="tmd-label">${label}</div>
+    <div class="tmd-meta">${matchTime}${stadiumName ? ` · ${stadiumName}` : ''}</div>
+    <div class="tmd-card${showPen ? ' show-pen' : ''}">
+      <span class="tmd-pen-head">승부차기</span>
+      <div class="tmd-row tmd-team${homeWins ? ' winner' : ''}">
+        <span class="tmd-left">${homeFlag}<span class="tmd-name">${homeName}</span></span>
+        ${scoreCtrl('home')}
+        ${penCtrl('home')}
+      </div>
+      <div class="tmd-divider"></div>
+      <div class="tmd-row tmd-team${awayWins ? ' winner' : ''}">
+        <span class="tmd-left">${awayFlag}<span class="tmd-name">${awayName}</span></span>
+        ${scoreCtrl('away')}
+        ${penCtrl('away')}
+      </div>
+    </div>`;
+}
+
+function changeSimModalScore(matchId, side, delta) {
+  changeSimKnockoutScore(matchId, side, delta);
+  refreshSimMatchModal();
+}
+
+function changeSimModalPenalty(matchId, side, delta) {
+  const m = simKnockoutMatches.find(m => m.id === matchId);
+  if (!m) return;
+  if (side === 'home') m.sim_home_penalty = Math.max(0, (m.sim_home_penalty || 0) + delta);
+  else                 m.sim_away_penalty = Math.max(0, (m.sim_away_penalty || 0) + delta);
+  renderSimTournamentTab();
+  refreshSimMatchModal();
 }
 
 // ─── 탭 렌더링: 토너먼트 ─────────────────────────────────────────
@@ -497,6 +651,8 @@ function doApplyRealKeep() {
     if (m.finished === true || m.finished === 'TRUE') {
       m.sim_home_score = Number(m.home_score);
       m.sim_away_score = Number(m.away_score);
+      m.sim_home_penalty = m.home_penalties != null ? Number(m.home_penalties) : 0;
+      m.sim_away_penalty = m.away_penalties != null ? Number(m.away_penalties) : 0;
       m.sim_played = true;
     }
   });
@@ -522,10 +678,14 @@ function doApplyRealReset() {
     if (m.finished === true || m.finished === 'TRUE') {
       m.sim_home_score = Number(m.home_score);
       m.sim_away_score = Number(m.away_score);
+      m.sim_home_penalty = m.home_penalties != null ? Number(m.home_penalties) : 0;
+      m.sim_away_penalty = m.away_penalties != null ? Number(m.away_penalties) : 0;
       m.sim_played = true;
     } else {
       m.sim_home_score = 0;
       m.sim_away_score = 0;
+      m.sim_home_penalty = 0;
+      m.sim_away_penalty = 0;
       delete m.sim_played;
     }
   });
@@ -550,10 +710,20 @@ function applyRealAndRandom() {
     if (m.finished === true || m.finished === 'TRUE') {
       m.sim_home_score = Number(m.home_score);
       m.sim_away_score = Number(m.away_score);
+      m.sim_home_penalty = m.home_penalties != null ? Number(m.home_penalties) : 0;
+      m.sim_away_penalty = m.away_penalties != null ? Number(m.away_penalties) : 0;
     } else {
       const sc = randomScore();
       m.sim_home_score = sc.home;
       m.sim_away_score = sc.away;
+      if (sc.home === sc.away) {
+        const pen = randomPenalty();
+        m.sim_home_penalty = pen.home;
+        m.sim_away_penalty = pen.away;
+      } else {
+        m.sim_home_penalty = 0;
+        m.sim_away_penalty = 0;
+      }
     }
     m.sim_played = true;
   });
@@ -573,6 +743,14 @@ function fullRandom() {
     const sc = randomScore();
     m.sim_home_score = sc.home;
     m.sim_away_score = sc.away;
+    if (sc.home === sc.away) {
+      const pen = randomPenalty();
+      m.sim_home_penalty = pen.home;
+      m.sim_away_penalty = pen.away;
+    } else {
+      m.sim_home_penalty = 0;
+      m.sim_away_penalty = 0;
+    }
     m.sim_played = true;
   });
   syncConfirmButtons();
@@ -586,6 +764,16 @@ function randomScore() {
     home: pool[Math.floor(Math.random() * pool.length)],
     away: pool[Math.floor(Math.random() * pool.length)],
   };
+}
+
+// 승부차기 스코어 생성 (예: 5-3, 4-3, 6-5)
+function randomPenalty() {
+  const loser = 3 + Math.floor(Math.random() * 4);  // 3~6
+  const margin = 1 + Math.floor(Math.random() * 3); // 1~3
+  const winner = loser + margin;
+  return Math.random() < 0.5
+    ? { home: winner, away: loser }
+    : { home: loser, away: winner };
 }
 
 // ─── 이벤트 등록 ──────────────────────────────────────────────────

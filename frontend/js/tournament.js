@@ -37,7 +37,7 @@ function renderBracketMatch(match, matchLabel) {
   const s2 = Number(match.away_score);
 
   return `
-    <div class="bracket-match">
+    <div class="bracket-match bracket-match-click" data-match-id="${match.id}" onclick="handleMatchClick(event,'${match.id}')">
       ${matchLabel ? `<div class="match-header">${matchLabel}</div>` : ''}
       ${renderTeam(match.home_team_id, match.home_team_label, match.home_score, isFinished && s1 > s2, isFinished)}
       ${renderTeam(match.away_team_id, match.away_team_label, match.away_score, isFinished && s2 > s1, isFinished)}
@@ -170,6 +170,88 @@ function buildBracketHtml(matches, opts = {}) {
           ${renderFn(thirdMatch, labels[thirdMatch.id])}
         </div>` : ''}
     </div>`;
+}
+
+// ── 경기 라벨 생성 (matchId → "32강 1경기" 등) ──
+function getMatchLabel(matchId) {
+  const match = matchesData.find(m => String(m.id) === String(matchId));
+  if (!match) return '';
+  if (match.type === 'final') return '결승';
+  if (match.type === 'third') return '3위결정전';
+  const typeKo = { r32: '32강', r16: '16강', qf: '8강', sf: '4강' };
+  const same = matchesData
+    .filter(m => m.type === match.type)
+    .sort((a, b) => Number(a.id) - Number(b.id));
+  const idx = same.findIndex(m => String(m.id) === String(matchId));
+  return `${typeKo[match.type]} ${idx + 1}경기`;
+}
+
+// ── 브라켓 경기 클릭 핸들러 ──
+function handleMatchClick(event, matchId) {
+  if (event.target.closest('button')) return;
+  openTournamentMatchModal(matchId);
+}
+
+// ── 경기 상세 모달 (일정/결과 탭) ──
+function openTournamentMatchModal(matchId) {
+  const match = matchesData.find(m => String(m.id) === String(matchId));
+  if (!match) return;
+
+  const label = getMatchLabel(matchId);
+  const isFinished = match.finished === true || match.finished === 'TRUE';
+  const hs = Number(match.home_score);
+  const as = Number(match.away_score);
+  const isDraw = isFinished && hs === as;
+
+  // 승부차기 데이터 (필드명 유연하게 처리)
+  const homePen = match.home_penalties != null ? Number(match.home_penalties) : null;
+  const awayPen = match.away_penalties != null ? Number(match.away_penalties) : null;
+  const showPen = isDraw && homePen !== null && awayPen !== null;
+
+  // 팀 표시
+  const homeTeam = teamsMap[match.home_team_id];
+  const awayTeam = teamsMap[match.away_team_id];
+  const homeName = homeTeam?.name_ko || translateLabel(match.home_team_label) || '미정';
+  const awayName = awayTeam?.name_ko || translateLabel(match.away_team_label) || '미정';
+  const homeFlag = homeTeam?.flag ? `<img src="${homeTeam.flag}" class="flag-icon">` : '';
+  const awayFlag = awayTeam?.flag ? `<img src="${awayTeam.flag}" class="flag-icon">` : '';
+
+  // 경기장 및 시간
+  const stadium = stadiumsMap[String(match.stadium_id)];
+  const stadiumName = stadium?.name_en || stadium?.name || '';
+  const matchTime = toKST(match.local_date, match.stadium_id);
+
+  // 승자 판별
+  const homeWins = isFinished && (showPen ? homePen > awayPen : hs > as);
+  const awayWins = isFinished && (showPen ? awayPen > homePen : as > hs);
+
+  function teamRow(flag, name, score, pen, isWinner) {
+    return `
+      <div class="tmd-row tmd-team${isWinner ? ' winner' : ''}">
+        <span class="tmd-left">${flag}<span class="tmd-name">${name}</span></span>
+        <span class="tmd-score">${isFinished ? score : '—'}</span>
+        <span class="tmd-pen-col tmd-pen-yellow">${showPen && pen !== null ? pen : ''}</span>
+      </div>`;
+  }
+
+  document.getElementById('tournament-match-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'tournament-match-modal';
+  modal.className = 'tmd-overlay';
+  modal.innerHTML = `
+    <div class="tmd-box">
+      <button class="tmd-close" onclick="document.getElementById('tournament-match-modal').remove()">✕</button>
+      <div class="tmd-label">${label}</div>
+      <div class="tmd-meta">${matchTime}${stadiumName ? ` · ${stadiumName}` : ''}</div>
+      <div class="tmd-card${showPen ? ' show-pen' : ''}">
+        <span class="tmd-pen-head">승부차기</span>
+        ${teamRow(homeFlag, homeName, match.home_score, homePen, homeWins)}
+        <div class="tmd-divider"></div>
+        ${teamRow(awayFlag, awayName, match.away_score, awayPen, awayWins)}
+      </div>
+    </div>`;
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
 }
 
 function renderTournament() {
