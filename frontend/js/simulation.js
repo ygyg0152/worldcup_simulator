@@ -393,8 +393,8 @@ function renderSimBracketTeam(match, side, isWinner) {
   const ctrlHtml = confirmed ? `
     <span class="sim-bt-score">${score}</span>
     <div class="sim-bt-ctrl">
-      <button class="sim-bt-btn" onclick="changeSimKnockoutScore('${match.id}','${side}',1)">▲</button>
-      <button class="sim-bt-btn" onclick="changeSimKnockoutScore('${match.id}','${side}',-1)">▼</button>
+      <button type="button" class="sim-bt-btn" onclick="changeSimKnockoutScore('${match.id}','${side}',1)">▲</button>
+      <button type="button" class="sim-bt-btn" onclick="changeSimKnockoutScore('${match.id}','${side}',-1)">▼</button>
     </div>` : '';
 
   return `
@@ -425,13 +425,50 @@ function renderSimBracketMatch(match, matchLabel) {
     </div>`;
 }
 
-// 토너먼트 점수 변경: simKnockoutMatches 업데이트 후 전체 재렌더
+// 토너먼트 점수 변경: 변경된 경기 카드만 교체 (스크롤 앵커 보존)
 function changeSimKnockoutScore(matchId, side, delta) {
   const m = simKnockoutMatches.find(m => m.id === matchId);
   if (!m) return;
   if (side === 'home') m.sim_home_score = Math.max(0, m.sim_home_score + delta);
   else                 m.sim_away_score = Math.max(0, m.sim_away_score + delta);
-  renderSimTournamentTab();
+  patchSimBracketDOM();
+}
+
+// 전체 innerHTML 교체 없이 각 match 카드만 개별 교체 → 스크롤 앵커 유지
+function patchSimBracketDOM() {
+  initSim();
+  initSimKnockout();
+  const simKnockout = buildSimKnockoutData();
+  const container = document.getElementById('subtab-sim-tournament');
+  if (!container) return;
+
+  simKnockout.forEach(match => {
+    const el = container.querySelector(`[data-match-id="${match.id}"]`);
+    if (!el) return;
+    const label = el.querySelector('.match-header')?.textContent?.trim() || '';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = renderSimBracketMatch(match, label);
+    el.replaceWith(tmp.firstElementChild);
+  });
+
+  // 챔피언 배너 갱신
+  const finalM = simKnockout.find(m => m.type === 'final');
+  const bannerEl = container.querySelector('.champion-banner');
+  let champion = null;
+  if (finalM && finalM.sim_home_team_id && finalM.sim_home_team_id !== '0'
+             && finalM.sim_away_team_id && finalM.sim_away_team_id !== '0') {
+    const winnerId = finalM.sim_home_score >= finalM.sim_away_score
+      ? finalM.sim_home_team_id : finalM.sim_away_team_id;
+    const team = teamsMap[winnerId];
+    if (team) champion = team;
+  }
+  if (champion) {
+    const bannerHtml = `<div class="champion-banner"><div class="champion-name">${champion.name_ko || champion.name_en} 우승!!</div><img src="${champion.flag}" class="champion-flag"></div>`;
+    if (bannerEl) bannerEl.outerHTML = bannerHtml;
+    else { const trophy = container.querySelector('.trophy'); if (trophy) trophy.insertAdjacentHTML('beforebegin', bannerHtml); }
+  } else if (bannerEl) {
+    bannerEl.remove();
+  }
 }
 
 // ─── 시뮬 토너먼트 경기 모달 ──────────────────────────────────────
@@ -562,7 +599,7 @@ function changeSimModalPenalty(matchId, side, delta) {
   if (!m) return;
   if (side === 'home') m.sim_home_penalty = Math.max(0, (m.sim_home_penalty || 0) + delta);
   else                 m.sim_away_penalty = Math.max(0, (m.sim_away_penalty || 0) + delta);
-  renderSimTournamentTab();
+  patchSimBracketDOM();
   refreshSimMatchModal();
 }
 
