@@ -457,8 +457,11 @@ function patchSimBracketDOM() {
   let champion = null;
   if (finalM && finalM.sim_home_team_id && finalM.sim_home_team_id !== '0'
              && finalM.sim_away_team_id && finalM.sim_away_team_id !== '0') {
-    const winnerId = finalM.sim_home_score >= finalM.sim_away_score
-      ? finalM.sim_home_team_id : finalM.sim_away_team_id;
+    const fhs = finalM.sim_home_score, fas = finalM.sim_away_score;
+    const fhp = finalM.sim_home_penalty || 0, fap = finalM.sim_away_penalty || 0;
+    const winnerId = fhs > fas ? finalM.sim_home_team_id
+      : fas > fhs ? finalM.sim_away_team_id
+      : fhp >= fap ? finalM.sim_home_team_id : finalM.sim_away_team_id;
     const team = teamsMap[winnerId];
     if (team) champion = team;
   }
@@ -614,9 +617,11 @@ function renderSimTournamentTab() {
   let champion = null;
   if (finalM && finalM.sim_home_team_id && finalM.sim_home_team_id !== '0'
               && finalM.sim_away_team_id && finalM.sim_away_team_id !== '0') {
-    const winnerId = finalM.sim_home_score >= finalM.sim_away_score
-      ? finalM.sim_home_team_id
-      : finalM.sim_away_team_id;
+    const fhs = finalM.sim_home_score, fas = finalM.sim_away_score;
+    const fhp = finalM.sim_home_penalty || 0, fap = finalM.sim_away_penalty || 0;
+    const winnerId = fhs > fas ? finalM.sim_home_team_id
+      : fas > fhs ? finalM.sim_away_team_id
+      : fhp >= fap ? finalM.sim_home_team_id : finalM.sim_away_team_id;
     const team = teamsMap[winnerId];
     if (team) champion = { name: team.name_ko || team.name_en, flag: team.flag };
   }
