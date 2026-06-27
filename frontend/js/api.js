@@ -1,5 +1,5 @@
 // 백엔드에서 데이터를 가져오는 모듈
-const API_BASE = "http://localhost:3000/api";
+const API_BASE = "/api";
 
 // FIFA 코드 → 한국어 팀명 매핑
 const TEAM_NAME_KO = {
